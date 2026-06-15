@@ -62,7 +62,7 @@
             <div class="container grid-2">
                 <div class="hero-content">
                     <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 0.75rem;">
-                        <span class="badge badge-primary">Release v1.0.0</span>
+                        <span class="badge badge-primary">Release v1.0.1</span>
                         <span class="badge badge-secondary" style="border-color: rgba(255, 255, 255, 0.1); color: var(--text-secondary); background: rgba(255,255,255,0.02); text-transform: none;">MIT License</span>
                         <span class="badge badge-secondary" style="border-color: rgba(255, 255, 255, 0.1); color: var(--text-secondary); background: rgba(255,255,255,0.02); text-transform: none;">Laravel 10.x – 13.x</span>
                     </div>
@@ -124,7 +124,7 @@
                     </p>
                 </div>
                 <div class="glass-card">
-                    <div style="font-size: 2rem; margin-bottom: 1rem;">📈</div>
+                    <div style="font-size: 2rem; margin-bottom: 1rem;">⚡</div>
                     <h3 style="margin-bottom: 0.5rem; color: var(--text-primary);">Real-Time Threat Engine</h3>
                     <p style="font-size: 0.9rem; color: var(--text-secondary);">
                         Tracks application model updates, mass delete executions, failed logins, and changes on sensitive configs. Triggers critical audit entries automatically.
@@ -156,6 +156,20 @@
                     <h3 style="margin-bottom: 0.5rem; color: var(--text-primary);">Pruning Schedules</h3>
                     <p style="font-size: 0.9rem; color: var(--text-secondary);">
                         Keep database tables lightweight and fast. Automatic scheduling parameters prune logs older than N days automatically.
+                    </p>
+                </div>
+                <div class="glass-card">
+                    <div style="font-size: 2rem; margin-bottom: 1rem;">🖥️</div>
+                    <h3 style="margin-bottom: 0.5rem; color: var(--text-primary);">Interactive Dashboard</h3>
+                    <p style="font-size: 0.9rem; color: var(--text-secondary);">
+                        Aggregate action logs, visitor navigation, and unread threat alerts in an interactive glassmorphic dashboard screen with 7-day trend graphs.
+                    </p>
+                </div>
+                <div class="glass-card">
+                    <div style="font-size: 2rem; margin-bottom: 1rem;">📈</div>
+                    <h3 style="margin-bottom: 0.5rem; color: var(--text-primary);">Reports &amp; Analytics</h3>
+                    <p style="font-size: 0.9rem; color: var(--text-secondary);">
+                        Detailed statistical breakdowns and Chart.js metrics over custom timeframes with support for CSV, Excel, and clean printable PDF exports.
                     </p>
                 </div>
             </div>
@@ -225,15 +239,21 @@
                         <p>Records detailed changes whenever your Eloquent models are created, updated, or deleted. Ideal for strict compliance tracking, operational auditing, and rolling back unexpected alterations.</p>
                         <h4 style="font-size: 0.85rem; text-transform: uppercase; color: var(--text-primary); margin-bottom: 0.5rem; letter-spacing: 0.05em;">Captured Attributes:</h4>
                         <div class="module-attributes-list">
-                            <span class="attr-tag">action_type</span>
-                            <span class="attr-tag">model_type</span>
-                            <span class="attr-tag">model_id</span>
+                            <span class="attr-tag">id</span>
+                            <span class="attr-tag">user_id</span>
+                            <span class="attr-tag">user_type</span>
+                            <span class="attr-tag">subject_id</span>
+                            <span class="attr-tag">subject_type</span>
+                            <span class="attr-tag">action</span>
+                            <span class="attr-tag">module</span>
+                            <span class="attr-tag">description</span>
                             <span class="attr-tag">old_values</span>
                             <span class="attr-tag">new_values</span>
-                            <span class="attr-tag">user_id</span>
                             <span class="attr-tag">ip_address</span>
-                            <span class="attr-tag">user_agent</span>
                             <span class="attr-tag">url</span>
+                            <span class="attr-tag">user_agent</span>
+                            <span class="attr-tag">created_at</span>
+                            <span class="attr-tag">updated_at</span>
                         </div>
                     </div>
                     <div class="terminal-window">
@@ -726,6 +746,12 @@
                             <td class="route-uri">/auditify/activity-logs</td>
                             <td class="route-controller">ActivityLogController@index</td>
                             <td>View list of activity logs</td>
+                        </tr>
+                        <tr>
+                            <td><span class="route-method get">GET</span></td>
+                            <td class="route-uri">/auditify/activity-logs/{id}</td>
+                            <td class="route-controller">ActivityLogController@show</td>
+                            <td>View activity log details</td>
                         </tr>
                         <tr>
                             <td><span class="route-method get">GET</span></td>

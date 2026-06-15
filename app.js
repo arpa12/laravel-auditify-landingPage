@@ -229,7 +229,7 @@ function setupModuleTabSelector() {
             title: 'Action Logs (ActionLog)',
             table: 'audit_action_logs',
             desc: 'Records detailed changes whenever your Eloquent models are created, updated, or deleted. Ideal for strict compliance tracking, operational auditing, and rolling back unexpected alterations.',
-            attributes: ['action_type', 'model_type', 'model_id', 'old_values', 'new_values', 'user_id', 'ip_address', 'user_agent', 'url'],
+            attributes: ['id', 'user_id', 'user_type', 'subject_id', 'subject_type', 'action', 'module', 'description', 'old_values', 'new_values', 'ip_address', 'url', 'user_agent', 'created_at', 'updated_at'],
             code: `<?php
 
 namespace Auditify\\Models;
@@ -250,7 +250,7 @@ class ActionLog extends Model
             title: 'Activity Logs (ActivityLog)',
             table: 'audit_activity_logs',
             desc: 'Tracks user navigation routes, session events, page visits, authentication states (logins, logouts), and client-side interactions. Perfect for tracking user pathways and understanding user flow.',
-            attributes: ['event_name', 'description', 'user_id', 'ip_address', 'user_agent', 'url', 'referer_url'],
+            attributes: ['id', 'user_id', 'user_type', 'activity', 'properties', 'url', 'ip_address', 'user_agent', 'created_at', 'updated_at'],
             code: `<?php
 
 namespace Auditify\\Models;
@@ -266,7 +266,7 @@ class ActivityLog extends Model
             title: 'Security Logs (SecurityLog)',
             table: 'audit_security_logs',
             desc: 'Captures malicious inputs blocked by the XSS firewall, failed authentications, or security rule violations flagged by the Real-Time Threat Engine. Stores security threat classifications for analysis.',
-            attributes: ['title', 'severity', 'description', 'user_id', 'ip_address', 'user_agent', 'url', 'is_read'],
+            attributes: ['id', 'user_id', 'user_type', 'severity', 'title', 'description', 'is_read', 'status', 'resolved_at', 'resolution_notes', 'method', 'route_name', 'payload', 'ip_address', 'user_agent', 'created_at', 'updated_at'],
             code: `<?php
 
 namespace Auditify\\Models;
@@ -522,19 +522,19 @@ function setupLogSimulator() {
             type: 'activity',
             time: '2 mins ago',
             badge: 'GET',
-            payload: `URL: https://domain.com/dashboard\nUser ID: 12\nIP: 192.168.1.58\nUA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0`
+            payload: `activity: Page Visit\nproperties: {"title":"Dashboard"}\nuser_id: 12\nuser_type: App\\Models\\User\nurl: /dashboard\nip_address: 192.168.1.58\nuser_agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0`
         },
         {
             type: 'action',
             time: '5 mins ago',
             badge: 'UPDATE',
-            payload: `Model: App\\Models\\User\nModel ID: 12\nAttributes:\n- old_values: {"theme":"light"}\n- new_values: {"theme":"dark"}\nIP: 192.168.1.58`
+            payload: `action: updated\nmodule: User\nsubject_id: 12\nsubject_type: App\\Models\\User\nuser_id: 12\nuser_type: App\\Models\\User\ndescription: User settings updated\nold_values: {"theme":"light"}\nnew_values: {"theme":"dark"}\nip_address: 192.168.1.58\nurl: /user/settings\nuser_agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0`
         },
         {
             type: 'security',
             time: '12 mins ago',
             badge: 'HIGH',
-            payload: `Alert: Sensitive Module Modified\nDescription: User 4 modified App\\Models\\Setting configuration properties.\nIP: 192.168.1.201`
+            payload: `severity: high\ntitle: Sensitive Module Modified\ndescription: User 4 modified App\\Models\\Setting configuration properties.\nis_read: false\nstatus: pending\nmethod: PUT\nroute_name: settings.update\npayload: {"timezone":"EST"}\nuser_id: 4\nuser_type: App\\Models\\User\nip_address: 192.168.1.201\nuser_agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0`
         }
     ];
 
@@ -618,7 +618,7 @@ function setupLogSimulator() {
             return;
         }
 
-        const payload = `Model: App\\Models\\User\nModel ID: 88 (Authenticated User)\nAction: UPDATE\nAttributes Difference:\n- old_values: {"name": "${cachedName}"}\n- new_values: {"name": "${newName}"}\nURL: https://domain.com/user/profile/update\nIP: 192.168.1.1\nUser Agent: Chrome/124.0.0`;
+        const payload = `action: updated\nmodule: User\nsubject_id: 88\nsubject_type: App\\Models\\User\nuser_id: 88\nuser_type: App\\Models\\User\ndescription: User profile updated\nold_values: {"name": "${cachedName}"}\nnew_values: {"name": "${newName}"}\nip_address: 192.168.1.1\nurl: /user/profile/update\nuser_agent: Chrome/124.0.0`;
         
         insertLog('action', 'UPDATE', payload);
         cachedName = newName;
@@ -631,7 +631,7 @@ function setupLogSimulator() {
     const downloadBtn = document.getElementById('sim-download-btn');
     downloadBtn.addEventListener('click', (e) => {
         e.preventDefault();
-        const payload = `Event: Frontend Interaction (API)\nName: File Download\nDescription: User downloaded the User_Guide.pdf document\nRoute Endpoint: /auditify/api/events\nIP: 192.168.1.1\nUA: Chrome/124.0.0\nStatus: Associated to Session user_id 88`;
+        const payload = `activity: File Download\nproperties: {"description": "User downloaded the User_Guide.pdf document"}\nuser_id: 88\nuser_type: App\\Models\\User\nurl: /auditify/api/events\nip_address: 192.168.1.1\nuser_agent: Chrome/124.0.0`;
         
         insertLog('activity', 'POST', payload);
         triggerTabSwitch('activity');
@@ -657,14 +657,14 @@ function setupLogSimulator() {
         if (deleteClicks < 5) {
             deleteClickCounter.innerText = `(${deleteClicks} clicks - click rapid 5 times!)`;
             // Log as simple delete action in action log
-            const payload = `Model: App\\Models\\Product\nModel ID: ${100 + deleteClicks}\nAction: DELETE\nAttributes Deleted:\n- old_values: {"sku": "PRD-00${deleteClicks}", "stock": 4}\nIP: 192.168.1.1`;
+            const payload = `action: deleted\nmodule: Product\nsubject_id: ${100 + deleteClicks}\nsubject_type: App\\Models\\Product\nuser_id: 88\nuser_type: App\\Models\\User\ndescription: Product record deleted\nold_values: {"sku": "PRD-00${deleteClicks}", "stock": 4}\nnew_values: null\nip_address: 192.168.1.1\nurl: /products/${100 + deleteClicks}\nuser_agent: Chrome/124.0.0`;
             insertLog('action', 'DELETE', payload);
         } else {
             // Trigger Critical Security alert threat engine!
             deleteClickCounter.innerText = '';
             deleteClicks = 0;
 
-            const payload = `Alert Triggered: Mass Delete Shield\nSeverity: CRITICAL\nDescription: User deleted 5 records within a single model (App\\Models\\Product) in less than 5 minutes.\nIP: 192.168.1.1\nUser Agent: Chrome/124.0.0`;
+            const payload = `severity: critical\ntitle: Mass Delete Shield Triggered\ndescription: User 88 deleted 5 records in App\\Models\\Product within 5 seconds.\nis_read: false\nstatus: pending\nmethod: DELETE\nroute_name: products.destroy\npayload: {"model": "App\\\\Models\\\\Product", "count": 5}\nuser_id: 88\nuser_type: App\\Models\\User\nip_address: 192.168.1.1\nuser_agent: Chrome/124.0.0`;
             insertLog('security', 'CRITICAL', payload);
 
             // Pop warning modal alert
@@ -689,7 +689,7 @@ function setupLogSimulator() {
             xssOverlay.style.display = 'flex';
 
             // Add Critical log
-            const payload = `Alert Triggered: XSS Attack Attempt Blocked\nSeverity: CRITICAL\nDescription: Script tag or HTML injection detected in parameter: "profile_bio" with value: "${inputVal}". Request aborted with 403.\nIP: 192.168.1.1\nUser Agent: Chrome/124.0.0`;
+            const payload = `severity: critical\ntitle: XSS Attack Blocked\ndescription: Malicious script execution (XSS) detected in input parameters. Request aborted with 403.\nis_read: false\nstatus: pending\nmethod: POST\nroute_name: profile.update\npayload: {"profile_bio": "${inputVal}"}\nuser_id: 88\nuser_type: App\\Models\\User\nip_address: 192.168.1.1\nuser_agent: Chrome/124.0.0`;
             insertLog('security', 'CRITICAL', payload);
             
             xssInput.value = ''; // clear input
@@ -699,7 +699,7 @@ function setupLogSimulator() {
             }, 300);
         } else {
             // Log as simple normal activity or profile edit
-            const payload = `Model: App\\Models\\User\nAction: UPDATE\nAttributes:\n- old_values: {"bio": ""}\n- new_values: {"bio": "${inputVal}"}\nIP: 192.168.1.1`;
+            const payload = `action: updated\nmodule: User\nsubject_id: 88\nsubject_type: App\\Models\\User\nuser_id: 88\nuser_type: App\\Models\\User\ndescription: User profile updated\nold_values: {"bio": ""}\nnew_values: {"bio": "${inputVal}"}\nip_address: 192.168.1.1\nurl: /profile/update\nuser_agent: Chrome/124.0.0`;
             insertLog('action', 'UPDATE', payload);
             xssInput.value = ''; // clear input
             triggerTabSwitch('action');
